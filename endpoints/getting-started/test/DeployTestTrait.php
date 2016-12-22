@@ -16,13 +16,8 @@
  */
 namespace Google\Cloud\Samples\AppEngine\Endpoints;
 
-use Google\Cloud\TestUtils\AppEngineDeploymentTrait;
-use Google\Cloud\TestUtils\FileUtil;
-
-class DeployTest extends \PHPUnit_Framework_TestCase
+trait DeployTestTrait
 {
-    use AppEngineDeploymentTrait;
-
     public static function setUpBeforeClass()
     {
         if (getenv('RUN_DEPLOYMENT_TESTS') !== 'true') {
@@ -33,43 +28,10 @@ class DeployTest extends \PHPUnit_Framework_TestCase
         if (!getenv('GOOGLE_ENDPOINTS_APIKEY')) {
             return self::markTestSkipped('Set the GOOGLE_ENDPOINTS_APIKEY environment variable');
         }
-    }
-
-    public static function beforeDeploy()
-    {
-        $clientId = getenv('GOOGLE_CLIENT_ID');
-        $serviceAccountEmail = getenv('GOOGLE_SERVICE_ACCOUNT_EMAIL');
-        if (empty($clientId) || empty($serviceAccountEmail)) {
-            self::markTestSkipped('Please set GOOGLE_CLIENT_ID, GOOGLE_PROJECT_ID '
-                . 'and GOOGLE_SERVICE_ACCOUNT_EMAIL');
-        }
-        $serviceName = getenv('GOOGLE_ENDPOINTS_SERVICE_NAME');
-        $configId = getenv('GOOGLE_ENDPOINTS_CONFIG_ID');
-        if (empty($serviceName) || empty($configId)) {
+        if (!getenv('GOOGLE_ENDPOINTS_SERVICE_NAME') || !getenv('GOOGLE_ENDPOINTS_CONFIG_ID')) {
             self::markTestSkipped('Please set GOOGLE_ENDPOINTS_CONFIG_ID '
                 . 'and GOOGLE_ENDPOINTS_SERVICE_NAME');
         }
-
-        // copy the source files to a temp directory
-        $tmpDir = FileUtil::cloneDirectoryIntoTmp(__DIR__ . '/..');
-        self::$gcloudWrapper->setDir($tmpDir);
-        chdir($tmpDir);
-
-        // update the swagger file for our configuration
-        $openapiYaml = str_replace(
-            ['YOUR-PROJECT-ID', 'YOUR-CLIENT-ID', 'YOUR-SERVICE-ACCOUNT-EMAIL'],
-            [self::getProjectId(), $clientId, $serviceAccountEmail],
-            file_get_contents('openapi.yaml')
-        );
-        file_put_contents($tmpDir . '/openapi.yaml', $openapiYaml);
-
-        // update app.yaml
-        $appYaml = str_replace(
-            ['ENDPOINTS SERVICE NAME', 'ENDPOINTS CONFIG ID'],
-            [$serviceName, $configId],
-            file_get_contents('app.yaml')
-        );
-        file_put_contents($tmpDir . '/app.yaml', $appYaml);
     }
 
     public function testEcho()
